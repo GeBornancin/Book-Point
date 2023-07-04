@@ -5,4 +5,5 @@ abstract class BookService {
   Future<void> deleteBook(String bookId);
   Future<BookEntity?> getBookById(String bookId);
   Future<void> updateBook(BookEntity book);
+  Future<List<BookEntity>> getBookList();
 }

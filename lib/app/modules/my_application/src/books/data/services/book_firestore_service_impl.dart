@@ -41,4 +41,16 @@ class BookFirestoreServiceImpl implements BookService {
     final documentRef = firestore.collection('books').doc(book.bId);
     await documentRef.set(BookMapper.entityToMap(book));
   }
+  
+  @override
+  Future<List<BookEntity>> getBookList() async {
+    final querySnapshot = await firestore.collection('books').get();
+
+    final books = querySnapshot.docs.map((doc) {
+      final map = doc.data();
+      return BookMapper.mapToEntity(map);
+    }).toList();
+
+  return books;
+}
 }

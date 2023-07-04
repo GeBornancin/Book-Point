@@ -22,7 +22,7 @@ class Home extends StatelessWidget {
             DrawerListTile(
               title: "Página 1",
               iconData: Icons.home,
-              page: '/page1',
+              page: '/books',
             ),
             DrawerListTile(
               title: "Página 2",

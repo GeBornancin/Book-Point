@@ -7,6 +7,8 @@ import 'package:login_with_firebase/app/modules/my_application/src/authenticatio
 import 'package:login_with_firebase/app/modules/my_application/src/authentication/external/services/email_auth_service_impl.dart';
 import 'package:login_with_firebase/app/modules/my_application/src/authentication/manager/auth_service_manager.dart';
 import 'package:login_with_firebase/app/modules/my_application/src/authentication/presenter/controller/auth_store.dart';
+import 'package:login_with_firebase/app/modules/my_application/src/books/data/services/book_firestore_service_impl.dart';
+import 'package:login_with_firebase/app/modules/my_application/src/views/book_view.dart';
 import 'package:login_with_firebase/app/modules/my_application/src/views/home_page.dart';
 import 'package:login_with_firebase/app/modules/my_application/src/views/signin_view.dart';
 import 'package:login_with_firebase/app/modules/my_application/src/views/signup_view.dart';
@@ -21,7 +23,9 @@ class MyApplication extends Module {
     Bind.lazySingleton((i) => AuthServiceManager(AuthType.email)),
     Bind.lazySingleton((i) => EmailAuthServiceImpl()),
     Bind.singleton((i) => AuthLocalCacheSharedPrefsImpl()),
+    
     //   Bind.lazySingleton((i) => AuthLocalCacheSharedPrefsImpl()),
+    
     Bind.lazySingleton((i) => AuthSignInUserCaseImpl(i())),
     Bind.lazySingleton((i) => AuthSignOutUserCaseImpl(i())),
     Bind.lazySingleton((i) => AuthSignUpUserCaseImpl(i())),
@@ -39,7 +43,11 @@ class MyApplication extends Module {
 
   @override
   List<ModularRoute> routes = [
-    ChildRoute('/', child: (ctx, args) => const Home(), guards: [HomeGuard()]),
+    ChildRoute('/', child: (ctx, args) =>const Home(), guards: [HomeGuard()]),
+    ChildRoute(
+      '/books',
+      child: (context, args) => BookView( ),
+    ),
     ChildRoute(
       '/signin-page',
       child: (context, args) => SignInPage(),
