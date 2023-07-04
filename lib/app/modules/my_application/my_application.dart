@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:login_with_firebase/app/modules/my_application/src/authentication/data/use_cases/auth_signin_user_case_impl.dart';
 import 'package:login_with_firebase/app/modules/my_application/src/authentication/data/use_cases/auth_signout_user_case_impl.dart';
@@ -8,6 +9,15 @@ import 'package:login_with_firebase/app/modules/my_application/src/authenticatio
 import 'package:login_with_firebase/app/modules/my_application/src/authentication/manager/auth_service_manager.dart';
 import 'package:login_with_firebase/app/modules/my_application/src/authentication/presenter/controller/auth_store.dart';
 import 'package:login_with_firebase/app/modules/my_application/src/books/data/services/book_firestore_service_impl.dart';
+import 'package:login_with_firebase/app/modules/my_application/src/books/data/use_cases/create_book_use_case_impl.dart';
+import 'package:login_with_firebase/app/modules/my_application/src/books/data/use_cases/delete_book_use_case_impl.dart';
+import 'package:login_with_firebase/app/modules/my_application/src/books/data/use_cases/get_book_by_id_use_case.dart';
+import 'package:login_with_firebase/app/modules/my_application/src/books/data/use_cases/update_book_use_case_impl.dart';
+import 'package:login_with_firebase/app/modules/my_application/src/books/domain/book_services_interfaces/book_service.dart';
+import 'package:login_with_firebase/app/modules/my_application/src/books/domain/use_cases_interfaces/ICreateBookUseCase.dart';
+import 'package:login_with_firebase/app/modules/my_application/src/books/domain/use_cases_interfaces/IDeleteBookUseCase.dart';
+import 'package:login_with_firebase/app/modules/my_application/src/books/domain/use_cases_interfaces/IGetBookByIdUseCase.dart';
+import 'package:login_with_firebase/app/modules/my_application/src/books/domain/use_cases_interfaces/IUpdateBookUseCase.dart';
 import 'package:login_with_firebase/app/modules/my_application/src/views/book_view.dart';
 import 'package:login_with_firebase/app/modules/my_application/src/views/home_page.dart';
 import 'package:login_with_firebase/app/modules/my_application/src/views/signin_view.dart';
@@ -39,13 +49,25 @@ class MyApplication extends Module {
       onDispose: (store) => store.destroy,
       selector: (store) => store.state,
     ),
+
+    // Register the BookService implementation
+    Bind<BookService>((i) => BookFirestoreServiceImpl(
+      FirebaseFirestore.instance,i.get<AuthStore>(),)),
+    // Bind for Create
+    Bind<ICreateBookUseCase>((i) => CreateBookUseCaseImpl(i.get<BookService>())),
+    // Bind for Read
+    Bind<IGetBookByIdUseCase>((i) => GetBookByIdUseCase(i.get<BookService>())),
+    // Bind for Update
+    Bind<IUpdateBookUseCase>((i) => UpdateBookUseCaseImpl(i.get<BookService>())),
+    // Bind for Delete
+    Bind<IDeleteBookUseCase>((i) => DeleteBookUseCaseImpl(i.get<BookService>())),
   ];
 
   @override
   List<ModularRoute> routes = [
-    ChildRoute('/', child: (ctx, args) =>const Home(), guards: [HomeGuard()]),
+    ChildRoute('/', child: (ctx, args) =>SignInPage(), guards: [HomeGuard()]),
     ChildRoute(
-      '/books',
+      '/home-page',
       child: (context, args) => BookView( ),
     ),
     ChildRoute(

@@ -16,16 +16,7 @@ import 'modules/my_application/src/books/domain/use_cases_interfaces/ICreateBook
 class AppModule extends Module {
   @override
   final List<Bind> binds = [
-    // Register the BookService implementation
-    Bind<BookService>((i) =>  BookFirestoreServiceImpl(FirebaseFirestore.instance)),
-    // Bind for Create
-    Bind<ICreateBookUseCase>((i) => CreateBookUseCaseImpl(i.get<BookService>())),
-    // Bind for Read
-    Bind<IGetBookByIdUseCase>((i) => GetBookByIdUseCase(i.get<BookService>())),
-    // Bind for Update
-    Bind<IUpdateBookUseCase>((i) => UpdateBookUseCaseImpl(i.get<BookService>())),
-    // Bind for Delete
-    Bind<IDeleteBookUseCase>((i) => DeleteBookUseCaseImpl(i.get<BookService>())),
+    
     ];
   @override
   List<ModularRoute> routes = [

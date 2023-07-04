@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:login_with_firebase/app/modules/my_application/src/authentication/presenter/controller/auth_store.dart';
 
 import '../../domain/book_entity.dart';
 import '../../domain/book_mapper.dart';
@@ -7,24 +8,28 @@ import '../../domain/book_services_interfaces/book_service.dart';
 class BookFirestoreServiceImpl implements BookService {
   final FirebaseFirestore firestore;
 
-  BookFirestoreServiceImpl(this.firestore);
+  BookFirestoreServiceImpl(this.firestore, this.authStore);
+    final AuthStore authStore; 
 
   @override
   Future<void> createBook(BookEntity book) async {
-    final collectionRef = firestore.collection('books');
-    await collectionRef.add(BookMapper.entityToMap(book));
+    final collectionRef = firestore.collection('books').doc(book.bId);
+    await collectionRef.set(BookMapper.entityToMap(book));
   }
 
   @override
-  Future<void> deleteBook(String bookId) async {
-    final documentRef = firestore.collection('books').doc(bookId);
-    await documentRef.delete();
+  Future<void> deleteBook(String bId) async {
+    final documentRef = firestore.collection('books').doc(bId);
+    print(documentRef);
+    await documentRef.delete().then(
+          (doc) => print("Document deleted "),
+          onError: (e) => print("Error updating document $e"),
+        );
   }
 
   @override
-  Future<BookEntity?> getBookById(String bookId) async {
-    final documentSnapshot =
-        await firestore.collection('books').doc(bookId).get();
+  Future<BookEntity?> getBookById(String bId) async {
+    final documentSnapshot = await firestore.collection('books').doc(bId).get();
 
     if (documentSnapshot.exists) {
       final map = documentSnapshot.data();
@@ -41,16 +46,22 @@ class BookFirestoreServiceImpl implements BookService {
     final documentRef = firestore.collection('books').doc(book.bId);
     await documentRef.set(BookMapper.entityToMap(book));
   }
-  
+
   @override
   Future<List<BookEntity>> getBookList() async {
-    final querySnapshot = await firestore.collection('books').get();
+    final String? userId =
+      authStore.getCurrentUserId(); // Acessar o ID do usuário atual
 
-    final books = querySnapshot.docs.map((doc) {
-      final map = doc.data();
-      return BookMapper.mapToEntity(map);
-    }).toList();
+      final querySnapshot = await firestore
+          .collection('books')
+          .where('userId', isEqualTo: userId) // Filtrar por userId
+          .get();
 
-  return books;
-}
+      final books = querySnapshot.docs.map((doc) {
+        final map = doc.data();
+        return BookMapper.mapToEntity(map);
+      }).toList();
+
+      return books;// Retornar uma lista vazia se o usuário não estiver autenticado
+  }
 }

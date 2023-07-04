@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_triple/flutter_triple.dart';
 
-
 import '../authentication/domain/user_credencial_entity.dart';
 import '../authentication/presenter/controller/auth_store.dart';
 import '../books/domain/book_entity.dart';
@@ -43,36 +42,96 @@ class _BookViewState extends State<BookView> {
     loadBooks();
   }
 
- Future<void> deleteBook(String bookId) async {
-  // Chame o método no serviço de livros para excluir o livro
-  await bookService.deleteBook(bookId);
+  Future<void> deleteBook(String bId) async {
+    // Chame o método no serviço de livros para excluir o livro
+    await bookService.deleteBook(bId);
 
-  // Atualize a lista de livros e atualize a interface do usuário
-  setState(() {
-    books.removeWhere((book) => book.bId == bookId);
-  });
-}
+    // Atualize a lista de livros e atualize a interface do usuário
+    setState(() {
+      books.removeWhere((book) => book.bId == bId);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final AuthStore authStore = Modular.get<AuthStore>();
     return Scaffold(
       appBar: AppBar(
-        title: Text('Books'),
+        title: const Text('Books'),
         backgroundColor: const Color.fromARGB(255, 0, 0, 0),
       ),
       drawer: Drawer(
         child: ListView(
           children: <Widget>[
-            const LoginDrawerHeader(),
-            DrawerListTile(
-              title: "Página 1",
-              iconData: Icons.home,
-              page: '/books',
-            ),
-            DrawerListTile(
-              title: "Página 2",
-              iconData: Icons.list,
-              page: '/page2',
+            DrawerHeader(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color.fromARGB(255, 43, 43, 43),
+                    Colors.white,
+                    Colors.grey.shade300,
+                    const Color.fromARGB(255, 130, 130, 130),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  stops: const [0.0, 0.3, 0.6, 0.9],
+                ),
+              ),
+              child: ScopedBuilder<AuthStore, UserCredentialApp?>(
+                store: authStore,
+                onLoading: ((_) => const CircularProgressIndicator()),
+                onState: (context, authState) {
+                  var user = authState;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      const Text(
+                        'Book point',
+                        style: TextStyle(fontSize: 30),
+                      ),
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            maxRadius: 35,
+                            child: (authStore.isAuth)
+                                ? Text(
+                                    user!.name!.substring(0, 1).toUpperCase(),
+                                    style: const TextStyle(fontSize: 50),
+                                  )
+                                : const Icon(Icons.question_mark, size: 40),
+                          ),
+                          const SizedBox(width: 10),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              (authStore.isAuth)
+                                  ? Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(user!.name!),
+                                        const SizedBox(height: 5),
+                                        Text(user.email),
+                                      ],
+                                    )
+                                  : const Icon(Icons.login, size: 40),
+                              TextButton(
+                                onPressed: () async {
+                                  await authStore.userSignOut();  
+                                  Modular.to.pushNamed('/signin-page');
+                                  
+                                },
+                                child: const Text("Sair"),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
           ],
         ),
@@ -90,89 +149,99 @@ class _BookViewState extends State<BookView> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showCreateBookDialog(),
-        child: Icon(Icons.add),
+        backgroundColor: const Color.fromARGB(255, 0, 0, 0),
+        child: const Icon(Icons.add),
       ),
     );
   }
 
-Future<void> _showCreateBookDialog() async {
-  bool isCompleted = false;
+  Future<void> _showCreateBookDialog() async {
+    bool isCompleted = false;
+    final AuthStore authStore = Modular.get<AuthStore>();
+    final userId = authStore.state?.uId ?? ''; // Obtenha o ID do usuário
 
-  await showDialog(
-    context: context,
-    builder: (context) {
-      final TextEditingController titleController = TextEditingController();
-      final TextEditingController authorController = TextEditingController();
-      final TextEditingController currentPageController =
-          TextEditingController();
+    await showDialog(
+      context: context,
+      builder: (context) {
+        final TextEditingController titleController = TextEditingController();
+        final TextEditingController authorController = TextEditingController();
+        final TextEditingController currentPageController =
+            TextEditingController();
 
-      return StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            title: Text('Add Book'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: titleController,
-                  decoration: InputDecoration(
-                    labelText: 'Title',
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Livro novo:'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: titleController,
+                    decoration: const InputDecoration(
+                      labelText: 'Titulo',
+                    ),
                   ),
-                ),
-                TextField(
-                  controller: authorController,
-                  decoration: InputDecoration(
-                    labelText: 'Author',
+                  TextField(
+                    controller: authorController,
+                    decoration: const InputDecoration(
+                      labelText: 'Autor',
+                    ),
                   ),
-                ),
-                TextField(
-                  controller: currentPageController,
-                  decoration: InputDecoration(
-                    labelText: 'Current Page',
+                  TextField(
+                    controller: currentPageController,
+                    decoration: const InputDecoration(
+                      labelText: 'Página em que parou',
+                    ),
+                    keyboardType: TextInputType.number,
                   ),
-                  keyboardType: TextInputType.number,
-                ),
-                CheckboxListTile(
-                  value: isCompleted,
-                  onChanged: (value) {
-                    setState(() {
-                      isCompleted = value!;
-                    });
+                  CheckboxListTile(
+                    value: isCompleted,
+                    onChanged: (value) {
+                      setState(() {
+                        isCompleted = value!;
+                      });
+                      const Color.fromARGB(255, 0, 0, 0);
+                    },
+                    controlAffinity: ListTileControlAffinity.leading,
+                    title: const Text('Lido'),
+                  ),
+                ],
+              ),
+              actions: [
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
                   },
-                  controlAffinity: ListTileControlAffinity.leading,
-                  title: const Text('Lido'),
+                  style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all<Color>(const Color.fromARGB(255, 246, 8, 8)), // Defina a cor de fundo como preto
+                  ),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final book = BookEntity(
+                      bId: UniqueKey().toString(),
+                      title: titleController.text,
+                      author: authorController.text,
+                      currentPage: int.parse(currentPageController.text),
+                      isCompleted: isCompleted,
+                      userId: userId, // Set the user ID accordingly
+                    );
+                    createBook(book);
+                    Navigator.of(context).pop();
+                  },
+                  style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all<Color>(Colors.black), // Defina a cor de fundo como preto
+                  ),
+                  child: const Text('Salvar'),
                 ),
               ],
-            ),
-            actions: [
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  final book = BookEntity(
-                    bId: UniqueKey().toString(),
-                    title: titleController.text,
-                    author: authorController.text,
-                    currentPage: int.parse(currentPageController.text),
-                    isCompleted: isCompleted,
-                    userId: '', // Set the user ID accordingly
-                  );
-                  createBook(book);
-                  Navigator.of(context).pop();
-                },
-                child: Text('Save'),
-              ),
-            ],
-          );
-        },
-      );
-    },
-  );
-}
+            );
+          },
+        );
+      },
+    );
+  }
 }
 
 class BookItem extends StatefulWidget {
@@ -199,19 +268,50 @@ class _BookItemState extends State<BookItem> {
     super.initState();
     isCompleted = widget.book.isCompleted;
   }
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(widget.book.title),
-      subtitle: Text(widget.book.author),
-      trailing: IconButton(
-        icon: Icon(Icons.delete),
-        onPressed: () => widget.onDelete(),
+  
+@override
+Widget build(BuildContext context) {
+  return Column(
+    children: [
+      ListTile(
+        title: Row(
+          children: [
+            AnimatedCrossFade(
+              duration: const Duration(milliseconds: 1000),
+              firstChild: const Icon(Icons.clear, color: Colors.red),
+              secondChild: const Icon(Icons.check, color: Colors.green),
+              crossFadeState: widget.book.isCompleted
+                  ? CrossFadeState.showSecond
+                  : CrossFadeState.showFirst,
+            ),
+            const SizedBox(width: 8), // Espaçamento entre a animação e o título
+            Text(widget.book.title),
+          ],
+        ),
+        subtitle: Text(widget.book.author),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.delete),
+              color: const Color.fromARGB(255, 252, 0, 0),
+              onPressed: () => widget.onDelete(),
+            ),
+            IconButton(
+              icon: const Icon(Icons.edit),
+              color: const Color.fromARGB(255, 0, 0, 0),
+              onPressed: () => _showEditBookDialog(context),
+            ),
+          ],
+        ),
       ),
-      onTap: () => _showEditBookDialog(context),
-    );
-  }
+      const Divider(
+        color: Colors.grey, // Define a cor do Divider
+        thickness: 1.0, // Define a espessura do Divider
+      ),
+    ],
+  );
+}
 
   Future<void> _showEditBookDialog(BuildContext context) async {
     final TextEditingController titleController =
@@ -227,26 +327,26 @@ class _BookItemState extends State<BookItem> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text('Edit Book'),
+              title: const Text('Editando livro'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
                     controller: titleController,
-                    decoration: InputDecoration(
-                      labelText: 'Title',
+                    decoration: const InputDecoration(
+                      labelText: 'Titulo',
                     ),
                   ),
                   TextField(
                     controller: authorController,
-                    decoration: InputDecoration(
-                      labelText: 'Author',
+                    decoration: const InputDecoration(
+                      labelText: 'Autor',
                     ),
                   ),
                   TextField(
                     controller: currentPageController,
-                    decoration: InputDecoration(
-                      labelText: 'Current Page',
+                    decoration: const InputDecoration(
+                      labelText: 'Pagina em que parou',
                     ),
                     keyboardType: TextInputType.number,
                   ),
@@ -267,7 +367,10 @@ class _BookItemState extends State<BookItem> {
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: Text('Cancel'),
+                  style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all<Color>(const Color.fromARGB(255, 246, 8, 8)), // Defina a cor de fundo como preto
+                  ),
+                  child: const Text('Cancelar'),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -280,7 +383,10 @@ class _BookItemState extends State<BookItem> {
                     widget.onUpdate(updatedBook);
                     Navigator.of(context).pop();
                   },
-                  child: Text('Save'),
+                  style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all<Color>(const Color.fromARGB(255, 0, 0, 0)), // Defina a cor de fundo como preto
+                  ),
+                  child: const Text('Salvar'),
                 ),
               ],
             );
@@ -289,145 +395,6 @@ class _BookItemState extends State<BookItem> {
       },
     );
   }
-}
-
-
-
-@override
-Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: AppBar(
-      title: const Text('Book Point'),
-      backgroundColor: const Color.fromARGB(255, 0, 0, 0),
-    ),
-    drawer: Drawer(
-      child: ListView(
-        children: <Widget>[
-          const LoginDrawerHeader(),
-          DrawerListTile(
-            title: "Página 1",
-            iconData: Icons.home,
-            page: '/page1',
-          ),
-          DrawerListTile(
-            title: "Página 2",
-            iconData: Icons.list,
-            page: '/page2',
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-// class BookItem extends StatelessWidget {
-//   final BookEntity book;
-//   final Function(BookEntity) onUpdate;
-//   final Function onDelete;
-
-//   const BookItem({
-//     Key? key,
-//     required this.book,
-//     required this.onUpdate,
-//     required this.onDelete,
-//   }) : super(key: key);
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return ListTile(
-//       title: Text(book.title),
-//       subtitle: Text(book.author),
-//       trailing: IconButton(
-//         icon: Icon(Icons.delete),
-//         onPressed: () => onDelete(),
-//       ),
-//       onTap: () => _showEditBookDialog(context),
-//     );
-//   }
-
-//   Future<void> _showEditBookDialog(BuildContext context) async {
-//     final TextEditingController titleController = TextEditingController(text: book.title);
-//     final TextEditingController authorController = TextEditingController(text: book.author);
-
-//     await showDialog(
-//       context: context,
-//       builder: (context) {
-//         return AlertDialog(
-//           title: Text('Edit Book'),
-//           content: Column(
-//             mainAxisSize: MainAxisSize.min,
-//             children: [
-//               TextField(
-//                 controller: titleController,
-//                 decoration: InputDecoration(
-//                   labelText: 'Title',
-//                 ),
-//               ),
-//               TextField(
-//                 controller: authorController,
-//                 decoration: InputDecoration(
-//                   labelText: 'Author',
-//                 ),
-//               ),
-//             ],
-//           ),
-//           actions: [
-//             ElevatedButton(
-//               onPressed: () {
-//                 Navigator.of(context).pop();
-//               },
-//               child: Text('Cancel'),
-//             ),
-//             ElevatedButton(
-//               onPressed: () {
-//                 final updatedBook = book.copyWith(
-//                   title: titleController.text,
-//                   author: authorController.text,
-//                 );
-//                 onUpdate(updatedBook);
-//                 Navigator.of(context).pop();
-//               },
-//               child: Text('Save'),
-//             ),
-//           ],
-//         );
-//       },
-//     );
-//   }
-// }
-
-Widget gambiarra() {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: <Widget>[
-      const Text(
-        'Meu Aplicativo',
-        style: TextStyle(fontSize: 30),
-      ),
-      Row(
-        children: [
-          const CircleAvatar(
-            maxRadius: 35,
-            child: Icon(Icons.question_mark, size: 40),
-          ),
-          const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              const Icon(Icons.login, size: 40),
-              TextButton(
-                onPressed: () {
-                  Modular.to.pushNamed('/login-page');
-                },
-                child: const Text("Entrar ou Cadastrar Login"),
-              ),
-            ],
-          ),
-        ],
-      ),
-    ],
-  );
 }
 
 class DrawerListTile extends StatelessWidget {
@@ -458,93 +425,3 @@ class DrawerListTile extends StatelessWidget {
   }
 }
 
-class LoginDrawerHeader extends StatelessWidget {
-  const LoginDrawerHeader({
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final AuthStore authStore = Modular.get<AuthStore>();
-    return DrawerHeader(
-      decoration: BoxDecoration(
-          gradient: LinearGradient(
-        colors: [
-          Color.fromARGB(255, 43, 43, 43),
-          Colors.white,
-          Colors.grey.shade300,
-          Color.fromARGB(255, 130, 130, 130),
-        ],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        stops: const [0.0, 0.3, 0.6, 0.9],
-      )),
-      child: ScopedBuilder<AuthStore, UserCredentialApp?>(
-        store: authStore,
-        onLoading: ((_) => const CircularProgressIndicator()),
-        onError: (_, failure) => gambiarra(),
-        // onError: (_, failure) => Center(
-        //   child: Text(
-        //     '${failure.toString()}, por favor recarregue',
-        //     style: const TextStyle(
-        //       color: Colors.red,
-        //       fontSize: 24.0,
-        //     ),
-        //   ),
-        // ),
-        onState: (context, authState) {
-          var user = authState;
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              const Text(
-                'Book point',
-                style: TextStyle(fontSize: 30),
-              ),
-              Row(
-                children: [
-                  CircleAvatar(
-                    maxRadius: 35,
-                    child: (authStore.isAuth)
-                        ? Text(
-                            user!.name!.substring(0, 1).toUpperCase(),
-                            style: const TextStyle(fontSize: 50),
-                          )
-                        : const Icon(Icons.question_mark, size: 40),
-                  ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      (authStore.isAuth)
-                          ? Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(user!.name!),
-                                const SizedBox(height: 5),
-                                Text(user.email),
-                              ],
-                            )
-                          : const Icon(Icons.login, size: 40),
-                      TextButton(
-                        onPressed: () {
-                          (authStore.isAuth)
-                              ? authStore.userSignOut()
-                              : Modular.to.pushNamed('/signin-page');
-                        },
-                        child: (authStore.isAuth)
-                            ? const Text("Sair")
-                            : const Text("Entrar ou Cadastrar Login"),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}

@@ -7,7 +7,7 @@ class DeleteBookUseCaseImpl implements IDeleteBookUseCase {
   DeleteBookUseCaseImpl(this.bookService);
 
   @override
-  Future<void> deleteBook(String bookId) async {
-    await bookService.deleteBook(bookId);
+  Future<void> deleteBook(String bId) async {
+    await bookService.deleteBook(bId);
   }
 }

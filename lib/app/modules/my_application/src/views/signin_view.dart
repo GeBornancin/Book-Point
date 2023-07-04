@@ -7,27 +7,30 @@ import '../authentication/domain/user_credencial_entity.dart';
 import '../authentication/presenter/controller/auth_store.dart';
 import '../components/form_field_login.dart';
 
-class SignInPage extends StatelessWidget {
+class SignInPage extends StatefulWidget {
+  SignInPage({Key? key}) : super(key: key);
+
+  @override
+  _SignInPageState createState() => _SignInPageState();
+}
+
+class _SignInPageState extends State<SignInPage> {
   final _userLoginController = TextEditingController();
   final _userPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  late AuthStore authStore;
 
-  SignInPage({super.key});
+  @override
+  void initState() {
+    super.initState();
+    authStore = Modular.get<AuthStore>();
+    authStore.checkCurrentUser();
+  }
 
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
-    final AuthStore authStore = Modular.get<AuthStore>();
     return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          //authStore.userSignOut();
-          Modular.to.pop();
-        },
-        label: const Text('Voltar'),
-        backgroundColor: Colors.black,
-        icon: const Icon(Icons.arrow_back_ios_new),
-      ),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -46,7 +49,7 @@ class SignInPage extends StatelessWidget {
                     ),
                     SizedBox(height: size.height * 0.008),
                     const Text(
-                      'My App Login',
+                      'Book Point',
                       style: TextStyle(fontSize: 24),
                     ),
                     SizedBox(height: size.height * 0.03),
@@ -68,7 +71,7 @@ class SignInPage extends StatelessWidget {
                       child: TextButton(
                         onPressed: () => Modular.to.pushNamed('/signup-page'),
                         child: const Text(
-                          'Cadastra-se',
+                          'Cadastrar-se',
                           style: TextStyle(
                             color: Color.fromARGB(255, 65, 81, 81),
                           ),
@@ -78,7 +81,14 @@ class SignInPage extends StatelessWidget {
                     SizedBox(height: size.height * 0.02),
                     ScopedListener<AuthStore, UserCredentialApp?>(
                       store: authStore,
-                      onState: (context_, state) => Modular.to.pop(),
+                      onState: (context_, state) {
+                        try {
+                          Modular.to.pushNamed('/home-page');
+                        } catch (e) {
+                          print(
+                              'Erro durante a navegação para a próxima página: $e');
+                        }
+                      },
                       onError: (context, error) =>
                           MessagesApp.showCustom(context, error.toString()),
                       child: Container(
@@ -88,9 +98,9 @@ class SignInPage extends StatelessWidget {
                           onPressed: () async {
                             if (_formKey.currentState!.validate()) {
                               authStore.userSignIn(
-                                  email: _userLoginController.text.trim(),
-                                  password:
-                                      _userPasswordController.text.trim());
+                                email: _userLoginController.text.trim(),
+                                password: _userPasswordController.text.trim(),
+                              );
                             }
                           },
                           style: ElevatedButton.styleFrom(
