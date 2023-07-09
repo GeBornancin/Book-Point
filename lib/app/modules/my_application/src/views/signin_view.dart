@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_triple/flutter_triple.dart';
@@ -7,8 +8,15 @@ import '../authentication/domain/user_credencial_entity.dart';
 import '../authentication/presenter/controller/auth_store.dart';
 import '../components/form_field_login.dart';
 
+
 class SignInPage extends StatefulWidget {
   SignInPage({Key? key}) : super(key: key);
+
+  @override
+  _SignInPageState createState() => _SignInPageState();
+}
+class SignInPageState extends StatefulWidget {
+  SignInPageState({Key? key}) : super(key: key);
 
   @override
   _SignInPageState createState() => _SignInPageState();
@@ -19,12 +27,33 @@ class _SignInPageState extends State<SignInPage> {
   final _userPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   late AuthStore authStore;
+  bool rememberUser = false;
+  bool showPassword = false;
 
   @override
   void initState() {
     super.initState();
     authStore = Modular.get<AuthStore>();
     authStore.checkCurrentUser();
+  }
+
+  void checkCurrentUser() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null && rememberUser) {
+      setState(() {
+        _userLoginController.text = currentUser.email ?? '';
+        _userPasswordController.text = ''; // Preencha com a senha armazenada, se aplicável
+      });
+    }
+  }
+
+  void _saveRememberUser(bool? value) {
+    if (value != null) {
+      setState(() {
+        rememberUser = value;
+      });
+      checkCurrentUser();
+    }
   }
 
   @override
@@ -44,8 +73,9 @@ class _SignInPageState extends State<SignInPage> {
                 child: Column(
                   children: <Widget>[
                     Icon(
-                      Icons.lock_person_rounded,
+                      Icons.bookmark,
                       size: size.height * 0.2,
+                      color: Color.fromARGB(255, 90, 88, 87),
                     ),
                     SizedBox(height: size.height * 0.008),
                     const Text(
@@ -64,20 +94,38 @@ class _SignInPageState extends State<SignInPage> {
                       hintName: 'Senha',
                       icon: Icons.lock,
                       controller: _userPasswordController,
-                      isObscured: true,
+                      isObscured: !showPassword,
+                      suffixIcon: showPassword ? Icons.visibility : Icons.visibility_off,
+                      onSuffixIconPressed: () {
+                        setState(() {
+                          showPassword = !showPassword;
+                        });
+                      },
                     ),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () => Modular.to.pushNamed('/signup-page'),
-                        child: const Text(
-                          'Cadastrar-se',
+                    Row(
+                      children: <Widget>[
+                        Checkbox(
+                          value: rememberUser,
+                          onChanged: _saveRememberUser,
+                        ),
+                        const Text('Lembrar usuário'),
+                      ],
+                    ),
+                   Align(
+                    alignment: Alignment.center,
+                    child: TextButton(
+                      onPressed: () => Modular.to.pushNamed('/signup-page'),
+                      child: RichText(
+                        text: const TextSpan(
+                          text: 'Cadastrar-se',
                           style: TextStyle(
-                            color: Color.fromARGB(255, 65, 81, 81),
+                            color: Color.fromARGB(255, 0, 0, 0),
+                            decoration: TextDecoration.underline, // Adiciona o sublinhado
                           ),
                         ),
                       ),
                     ),
+                  ),
                     SizedBox(height: size.height * 0.02),
                     ScopedListener<AuthStore, UserCredentialApp?>(
                       store: authStore,
@@ -104,7 +152,6 @@ class _SignInPageState extends State<SignInPage> {
                             }
                           },
                           style: ElevatedButton.styleFrom(
-                            //shape: const StadiumBorder(),
                             backgroundColor: Colors.black,
                           ),
                           child: const Text(
@@ -128,7 +175,7 @@ class _SignInPageState extends State<SignInPage> {
                           ),
                         ),
                       ],
-                    )
+                    ),
                   ],
                 ),
               ),

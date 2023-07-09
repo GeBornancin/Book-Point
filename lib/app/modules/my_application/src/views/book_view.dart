@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_triple/flutter_triple.dart';
 
+
 import '../authentication/domain/user_credencial_entity.dart';
 import '../authentication/presenter/controller/auth_store.dart';
 import '../books/domain/book_entity.dart';
 import '../books/domain/book_services_interfaces/book_service.dart';
+
 
 class BookView extends StatefulWidget {
   @override
@@ -57,7 +59,7 @@ class _BookViewState extends State<BookView> {
     final AuthStore authStore = Modular.get<AuthStore>();
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Books'),
+        title: const Text('Book List'),
         backgroundColor: const Color.fromARGB(255, 0, 0, 0),
       ),
       drawer: Drawer(
@@ -92,23 +94,27 @@ class _BookViewState extends State<BookView> {
                       ),
                       Row(
                         children: [
-                          CircleAvatar(
+                         GestureDetector(
+                          child: CircleAvatar(
                             maxRadius: 35,
-                            child: (authStore.isAuth)
+                            backgroundImage: (authStore.isAuth && user!.profileImage != null)
+                                ? NetworkImage(user!.profileImage!)
+                                : null,
+                            child: (authStore.isAuth && user!.profileImage == null)
                                 ? Text(
                                     user!.name!.substring(0, 1).toUpperCase(),
                                     style: const TextStyle(fontSize: 50),
                                   )
-                                : const Icon(Icons.question_mark, size: 40),
+                                : null,
                           ),
+                        ),
                           const SizedBox(width: 10),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
                               (authStore.isAuth)
                                   ? Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(user!.name!),
                                         const SizedBox(height: 5),
@@ -120,7 +126,6 @@ class _BookViewState extends State<BookView> {
                                 onPressed: () async {
                                   await authStore.userSignOut();  
                                   Modular.to.pushNamed('/signin-page');
-                                  
                                 },
                                 child: const Text("Sair"),
                               ),
@@ -150,7 +155,7 @@ class _BookViewState extends State<BookView> {
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showCreateBookDialog(),
         backgroundColor: const Color.fromARGB(255, 0, 0, 0),
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.bookmark_add),
       ),
     );
   }
@@ -425,3 +430,51 @@ class DrawerListTile extends StatelessWidget {
   }
 }
 
+class RatingWidget extends StatefulWidget {
+  final int initialRating;
+  final Function(int) onRatingChanged;
+
+  const RatingWidget({
+    Key? key,
+    required this.initialRating,
+    required this.onRatingChanged,
+  }) : super(key: key);
+
+  @override
+  _RatingWidgetState createState() => _RatingWidgetState();
+}
+
+class _RatingWidgetState extends State<RatingWidget> {
+  late int _currentRating;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentRating = widget.initialRating;
+  }
+
+  void _handleRatingChanged(int rating) {
+    setState(() {
+      _currentRating = rating;
+    });
+
+    widget.onRatingChanged(rating);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(5, (index) {
+        final filledStar = index < _currentRating;
+        return GestureDetector(
+          onTap: () => _handleRatingChanged(index + 1),
+          child: Icon(
+            filledStar ? Icons.star : Icons.star_border,
+            color: filledStar ? Colors.yellow : Colors.grey,
+          ),
+        );
+      }),
+    );
+  }
+}

@@ -15,6 +15,7 @@ class AuthStore extends Store<UserCredentialApp?> {
   late final IAuthLocalCache _localCache;
 
   bool _isAuth = false;
+  
 
   AuthStore({
     required IAuthSignInUseCase userSignIn,
@@ -27,7 +28,7 @@ class AuthStore extends Store<UserCredentialApp?> {
     _userSignUp = userSignUp;
     _localCache = localCache;
     _userLocalCache();
-  }
+  } 
 
    String? getCurrentUserId() {
     final currentUser = FirebaseAuth.instance.currentUser;

@@ -45,13 +45,15 @@ class SignUpPage extends StatelessWidget {
                 child: Column(
                   children: <Widget>[
                     Icon(
-                      Icons.lock_person_rounded,
+                      Icons.bookmark,
                       size: size.height * 0.2,
+                      color: Color.fromARGB(255, 90, 88, 87),
                     ),
                     SizedBox(height: size.height * 0.008),
                     const Text(
-                      'My App Login - Sign Up',
+                      'Book Point - Cadastro',
                       style: TextStyle(fontSize: 24),
+                      
                     ),
                     SizedBox(height: size.height * 0.04),
                     FormFieldLogin(

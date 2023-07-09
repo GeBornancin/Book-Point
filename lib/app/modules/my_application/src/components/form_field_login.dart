@@ -7,15 +7,18 @@ class FormFieldLogin extends StatelessWidget {
   TextInputType inputType;
   bool isObscured;
   bool enableField;
+  final IconData? suffixIcon;
+  final VoidCallback? onSuffixIconPressed;
 
   FormFieldLogin({
-    super.key,
     required this.hintName,
     required this.icon,
     required this.controller,
     this.isObscured = false,
     this.inputType = TextInputType.text,
     this.enableField = true,
+    this.suffixIcon,
+    this.onSuffixIconPressed,
   });
 
   @override
@@ -25,9 +28,14 @@ class FormFieldLogin extends StatelessWidget {
       keyboardType: inputType,
       obscureText: isObscured,
       decoration: InputDecoration(
+        suffixIcon: suffixIcon != null
+            ? IconButton(
+                icon: Icon(suffixIcon),
+                onPressed: onSuffixIconPressed,
+              )
+            : null,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          //borderSide: BorderSide.none,
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderSide: BorderSide(color: Theme.of(context).colorScheme.error),
@@ -38,10 +46,10 @@ class FormFieldLogin extends StatelessWidget {
       ),
       validator: (value) {
         if (value == null || value.trim().isEmpty) {
-          return 'Por favor Digite $hintName';
+          return 'Por favor, digite $hintName';
         }
-        if ((hintName.contains('E-mail')) && !validateEmail(value)) {
-          return 'Digite um email válido';
+        if (hintName.contains('E-mail') && !validateEmail(value)) {
+          return 'Digite um e-mail válido';
         }
         return null;
       },

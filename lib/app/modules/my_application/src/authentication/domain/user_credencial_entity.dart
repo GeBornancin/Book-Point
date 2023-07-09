@@ -6,6 +6,7 @@ class UserCredentialApp {
   final String? password;
   final String? token;
   final DateTime? tokenExpireIn;
+  String? profileImage; // Campo para armazenar a URL da imagem do perfil
 
   UserCredentialApp({
     required this.authType,
@@ -15,7 +16,7 @@ class UserCredentialApp {
     this.password,
     this.token,
     this.tokenExpireIn,
+    this.profileImage, // Incluir o parâmetro do construtor
   });
 }
-
 enum AuthType { email, google }
